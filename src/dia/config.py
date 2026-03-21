@@ -8,6 +8,7 @@ import contextvars
 
 TINYFISH_API_KEY: str = os.environ.get("TINYFISH_API_KEY", "")
 FIRECRAWL_API_KEY: str = os.environ.get("FIRECRAWL_API_KEY", "")
+GITHUB_TOKEN: str = os.environ.get("GITHUB_TOKEN", "")
 
 # ContextVars to allow users to bring their own keys per-request (overriding env vars)
 TINYFISH_API_KEY_CTX: contextvars.ContextVar[str] = contextvars.ContextVar("tf_api_key_ctx", default="")

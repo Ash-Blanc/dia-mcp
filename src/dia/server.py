@@ -29,6 +29,7 @@ from dia.tools.site_pattern_hunt import site_pattern_hunt
 from dia.tools.index_pattern import index_pattern
 from dia.tools.index_flow import index_flow
 from dia.tools.search_index import search_index
+from dia.tools.report_issue import report_issue
 from dia.prompts.inspo_hunt import inspo_hunt
 
 # ── Lifespan ──────────────────────────────────────────────────
@@ -72,6 +73,7 @@ mcp.add_tool(site_pattern_hunt)
 mcp.add_tool(index_pattern)
 mcp.add_tool(index_flow)
 mcp.add_tool(search_index)
+mcp.add_tool(report_issue)
 
 
 # ── Prompt ────────────────────────────────────────────────────
