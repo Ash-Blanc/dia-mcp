@@ -4,14 +4,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import sys
-from pathlib import Path
-
-# Add the 'src' directory to the path if it's not already there
-# This allows the 'dia' package to be found when running the server file directly
-src_path = str(Path(__file__).parent.parent.resolve())
-if src_path not in sys.path and (Path(src_path) / "dia").exists():
-    sys.path.insert(0, src_path)
 
 from fastmcp import FastMCP
 from fastmcp.server.lifespan import lifespan
@@ -89,7 +81,16 @@ def main():
     parser.add_argument(
         "--remote",
         action="store_true",
-        help="Run in remote SSE mode instead of stdio",
+        help="Run in remote HTTP mode instead of stdio",
+    )
+    parser.add_argument(
+        "--transport",
+        choices=["stdio", "streamable-http", "sse"],
+        default=os.getenv("MCP_TRANSPORT"),
+        help=(
+            "Transport to use. Defaults to stdio locally and streamable-http "
+            "when --remote is set."
+        ),
     )
     parser.add_argument(
         "--host",
@@ -104,10 +105,14 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.remote:
-        mcp.run(transport="sse", host=args.host, port=args.port)
-    else:
+    transport = args.transport
+    if transport is None:
+        transport = "streamable-http" if args.remote else "stdio"
+
+    if transport == "stdio":
         mcp.run(transport="stdio")
+    else:
+        mcp.run(transport=transport, host=args.host, port=args.port)
 
 
 if __name__ == "__main__":
