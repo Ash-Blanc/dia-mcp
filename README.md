@@ -75,16 +75,9 @@ Or with custom host/port:
 uv run dia-mcp --remote --host 127.0.0.1 --port 8080
 ```
 
-If you need legacy SSE transport for an older client:
-
-```bash
-uv run dia-mcp --remote --transport sse
-```
-
 You can also use environment variables:
 - `MCP_HOST` — default: `0.0.0.0`
 - `MCP_PORT` — default: `8000`
-- `MCP_TRANSPORT` — optional: `stdio`, `streamable-http`, or `sse`
 
 ---
 
@@ -183,9 +176,6 @@ If running in remote Streamable HTTP mode, clients connect via HTTP at `/mcp`:
   }
 }
 ```
-
-For legacy SSE clients, use the `/sse` endpoint and start the server with
-`--transport sse`.
 
 ## Development Commands
 
