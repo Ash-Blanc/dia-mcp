@@ -10,12 +10,6 @@ from fastmcp import Context
 from dia.clients import firecrawl as fc
 from dia.clients import tinyfish as tf
 from dia.sources import SOURCES, pick_sources
-from dia.config import (
-    FIRECRAWL_API_KEY_CTX,
-    TINYFISH_API_KEY_CTX,
-    MOBBIN_EMAIL_CTX,
-    MOBBIN_PASSWORD_CTX,
-)
 
 DESIGN_GUIDANCE = (
     "You are a Senior Design Systems Architect. "
@@ -30,10 +24,6 @@ DESIGN_GUIDANCE = (
 
 async def find_inspo(
     query: str,
-    firecrawl_api_key: str | None = None,
-    tinyfish_api_key: str | None = None,
-    mobbin_login_email: str | None = None,
-    mobbin_login_password: str | None = None,
     platform: str = "auto",
     ui_type: str = "any",
     limit: int = 12,
@@ -48,23 +38,11 @@ async def find_inspo(
     Args:
         query: e.g. "onboarding flow", "dark mode dashboard",
                "pricing page SaaS", "mobile navigation bottom sheet"
-        firecrawl_api_key: Your personal Firecrawl API key
-        tinyfish_api_key: Your personal Tinyfish API key
-        mobbin_login_email: The email address to your Mobbin account
-        mobbin_login_password: The password to your Mobbin account
         platform: "auto" | "mobbin" | "dribbble" | "refero" | "godly"
                   | "screenlane" | "collectui" | "behance" | "all"
         ui_type: "web" | "mobile" | "ios" | "android" | "any"
         limit: target number of results (default 12)
     """
-    if firecrawl_api_key:
-        FIRECRAWL_API_KEY_CTX.set(firecrawl_api_key)
-    if tinyfish_api_key:
-        TINYFISH_API_KEY_CTX.set(tinyfish_api_key)
-    if mobbin_login_email:
-        MOBBIN_EMAIL_CTX.set(mobbin_login_email)
-    if mobbin_login_password:
-        MOBBIN_PASSWORD_CTX.set(mobbin_login_password)
     if platform == "auto":
         source_keys = pick_sources(query, ui_type)
     elif platform == "all":
@@ -101,14 +79,8 @@ async def find_inspo(
                 )
             
             login_instructions = ""
-            if key == "mobbin":
-                email = MOBBIN_EMAIL_CTX.get()
-                password = MOBBIN_PASSWORD_CTX.get()
-                if email and password:
-                    login_instructions = (
-                        f"First, navigate to the login page and authenticate using "
-                        f"email '{email}' and password '{password}'. Wait to confirm login. Then, "
-                    )
+            # Mobbin authentication will be handled via server-side env vars 
+            # as requested (e.g. for load balancing).
 
             tf_tasks.append(
                 {

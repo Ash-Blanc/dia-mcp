@@ -6,18 +6,13 @@ from typing import Any
 
 from firecrawl import Firecrawl
 
-from dia.config import FIRECRAWL_API_KEY, FIRECRAWL_API_KEY_CTX
+from dia.config import FIRECRAWL_API_KEY
 
 _fc: Firecrawl | None = None
 
 
 def _client() -> Firecrawl:
     global _fc
-    # Check if a context-level key override was set by the MCP tool
-    ctx_key = FIRECRAWL_API_KEY_CTX.get()
-    if ctx_key:
-        return Firecrawl(api_key=ctx_key)
-        
     if _fc is None:
         _fc = Firecrawl(api_key=FIRECRAWL_API_KEY)
     return _fc

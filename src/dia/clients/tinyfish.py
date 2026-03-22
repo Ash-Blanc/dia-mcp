@@ -8,7 +8,7 @@ from typing import Any
 
 import httpx
 
-from dia.config import TINYFISH_API_KEY, TINYFISH_API_KEY_CTX
+from dia.config import TINYFISH_API_KEY
 
 TINYFISH_URL = "https://agent.tinyfish.ai/v1/automation/run-sse"
 
@@ -47,7 +47,7 @@ async def run_agent(
             "POST",
             TINYFISH_URL,
             headers={
-                "X-API-Key": TINYFISH_API_KEY_CTX.get() or TINYFISH_API_KEY,
+                "X-API-Key": TINYFISH_API_KEY,
                 "Content-Type": "application/json",
             },
             json=payload,
