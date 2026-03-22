@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import json
-import asyncio
-from typing import Any
 from fastmcp import Context
 
 from dia.tools.find_inspo import find_inspo
@@ -34,11 +32,11 @@ async def ux_oracle(
     # ── Phase 1: Landscape Discovery ──
     if ctx:
         await ctx.info("Phase 1: Casting broad net for industry standards...")
-    
+
     inspo_json = await find_inspo(query, limit=10)
     inspo_data = json.loads(inspo_json)
     board = inspo_data.get("inspiration_board", [])
-    
+
     if not board:
         return json.dumps({"error": "Oracle could not find any initial references."})
 
@@ -47,7 +45,9 @@ async def ux_oracle(
 
     if ctx:
         await ctx.report_progress(1, 4)
-        await ctx.info("Phase 2: Filtering high-signal candidates for DNA extraction...")
+        await ctx.info(
+            "Phase 2: Filtering high-signal candidates for DNA extraction..."
+        )
 
     # ── Phase 2: Signal Filtering & DNA Extraction ──
     # Pick top 2 unique URLs from Dribbble/Firecrawl results
@@ -80,7 +80,9 @@ async def ux_oracle(
     audit_results = None
     if depth == "deep" and candidate_urls:
         if ctx:
-            await ctx.info(f"Phase 3: Performing deep site audit on {candidate_urls[0]}...")
+            await ctx.info(
+                f"Phase 3: Performing deep site audit on {candidate_urls[0]}..."
+            )
         try:
             audit_json = await site_pattern_hunt(candidate_urls[0], limit=5)
             audit_results = json.loads(audit_json)
@@ -104,8 +106,8 @@ async def ux_oracle(
         "suggested_principles": [
             "Information Density: How these examples balance data vs. whitespace.",
             "Visual Anchors: The primary elements used to guide user attention.",
-            "Interaction Cost: Evaluation of the effort required to complete the task."
-        ]
+            "Interaction Cost: Evaluation of the effort required to complete the task.",
+        ],
     }
 
     if ctx:

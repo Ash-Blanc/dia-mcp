@@ -10,7 +10,6 @@ from fastmcp import Context
 from dia.clients import firecrawl as fc
 from dia.clients import tinyfish as tf
 from dia.sources import SOURCES, pick_sources
-from dia.config import MOBBIN_EMAIL, MOBBIN_PASSWORD
 
 DESIGN_GUIDANCE = (
     "You are a Senior Design Systems Architect. "
@@ -78,16 +77,10 @@ async def find_inspo(
                     query=query.replace(" ", "+"),
                     platform=ui_type if ui_type != "any" else "web",
                 )
-            
+
             login_instructions = ""
-            if key == "mobbin":
-                email = MOBBIN_EMAIL
-                password = MOBBIN_PASSWORD
-                if email and password:
-                    login_instructions = (
-                        f"First, navigate to the login page and authenticate using "
-                        f"email '{email}' and password '{password}'. Wait to confirm login. Then, "
-                    )
+            # Mobbin authentication will be handled via server-side env vars
+            # as requested (e.g. for load balancing).
 
             tf_tasks.append(
                 {

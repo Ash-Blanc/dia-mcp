@@ -7,10 +7,7 @@ from pathlib import Path
 
 TINYFISH_API_KEY: str = os.environ.get("TINYFISH_API_KEY", "")
 FIRECRAWL_API_KEY: str = os.environ.get("FIRECRAWL_API_KEY", "")
-
-# Server-side stored credentials to run automated logins
-MOBBIN_EMAIL: str = os.environ.get("MOBBIN_EMAIL", "")
-MOBBIN_PASSWORD: str = os.environ.get("MOBBIN_PASSWORD", "")
+GITHUB_TOKEN: str = os.environ.get("GITHUB_TOKEN", "")
 
 # Allow overriding the index directory via environment variable.
 # For remote servers with ephemeral filesystems, this should point to a

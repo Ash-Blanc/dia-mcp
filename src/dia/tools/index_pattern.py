@@ -24,7 +24,9 @@ async def index_pattern(
               | forms | modals | empty-states | error-handling | pricing
     tags: comma-separated, e.g. "dark-mode,mobile,saas,minimalist"
     """
-    scraped = await asyncio.to_thread(fc.scrape, url, formats=["markdown", "screenshot", "branding"])
+    scraped = await asyncio.to_thread(
+        fc.scrape, url, formats=["markdown", "screenshot", "branding"]
+    )
     md = scraped.get("markdown", "") or ""
     ss = scraped.get("screenshot", "") or ""
     branding = scraped.get("branding", {})

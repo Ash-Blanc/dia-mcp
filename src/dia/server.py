@@ -1,24 +1,19 @@
 """UI/UX Inspo MCP Server — find the best UI/UX inspiration as images, fast."""
 
+# ruff: noqa: E402
+
 from __future__ import annotations
 
 import argparse
 import os
-import sys
-from pathlib import Path
-
-# Add the 'src' directory to the path if it's not already there
-# This allows the 'dia' package to be found when running the server file directly
-src_path = str(Path(__file__).parent.parent.resolve())
-if src_path not in sys.path and (Path(src_path) / "dia").exists():
-    sys.path.insert(0, src_path)
 
 from fastmcp import FastMCP
 from fastmcp.server.lifespan import lifespan
 
+from starlette.middleware import Middleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-
 from dia.index.db import init as init_db
 from dia.tools.find_inspo import find_inspo
 from dia.tools.screenshot import screenshot_live_app
@@ -32,6 +27,7 @@ from dia.tools.site_pattern_hunt import site_pattern_hunt
 from dia.tools.index_pattern import index_pattern
 from dia.tools.index_flow import index_flow
 from dia.tools.search_index import search_index
+from dia.tools.report_issue import report_issue
 from dia.prompts.inspo_hunt import inspo_hunt
 
 # ── Lifespan ──────────────────────────────────────────────────
@@ -75,6 +71,7 @@ mcp.add_tool(site_pattern_hunt)
 mcp.add_tool(index_pattern)
 mcp.add_tool(index_flow)
 mcp.add_tool(search_index)
+mcp.add_tool(report_issue)
 
 
 # ── Prompt ────────────────────────────────────────────────────
@@ -83,6 +80,7 @@ mcp.prompt()(inspo_hunt)
 
 
 # ── Health Check ──────────────────────────────────────────────
+
 
 @mcp.custom_route("/health", methods=["GET"])
 async def health_check(request: Request):
@@ -96,6 +94,57 @@ async def health_check(request: Request):
     )
 
 
+# ── Authentication ──────────────────────────────────────────────
+
+
+class AuthMiddleware(BaseHTTPMiddleware):
+    """
+    HTTP Middleware to secure /sse, streamable paths, and /messages/ endpoints using
+    standard API keys or Bearer tokens.
+    """
+
+    def __init__(self, app, api_key: str):
+        super().__init__(app)
+        self.api_key = api_key
+
+    async def dispatch(self, request: Request, call_next):
+        from fastmcp import settings
+
+        # Only protect SSE, streamable-http, and messages endpoints
+        path = request.url.path
+        if not (
+            path == settings.sse_path
+            or path == settings.streamable_http_path
+            or path.startswith(settings.message_path)
+        ):
+            return await call_next(request)
+
+        auth_header = request.headers.get("Authorization")
+        api_key_header = request.headers.get("X-API-Key")
+
+        is_authenticated = False
+        if api_key_header and api_key_header == self.api_key:
+            is_authenticated = True
+        elif auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split("Bearer ")[1]
+            if token == self.api_key:
+                is_authenticated = True
+
+        if not is_authenticated:
+            # NOTE: Bypassing the report_issue tool at the HTTP level is complex
+            # because the tool execution payload is inside the encrypted/streamed
+            # POST request body. Thus, authentication is required globally here.
+            return JSONResponse(
+                content={
+                    "error": "Unauthorized",
+                    "message": "Invalid or missing API key.",
+                },
+                status_code=401,
+            )
+
+        return await call_next(request)
+
+
 # ── Entrypoint ────────────────────────────────────────────────
 
 
@@ -104,7 +153,7 @@ def main():
     parser.add_argument(
         "--remote",
         action="store_true",
-        help="Run in remote SSE mode instead of stdio",
+        help="Run in remote Streamable HTTP mode instead of stdio",
     )
     parser.add_argument(
         "--host",
@@ -120,7 +169,17 @@ def main():
     args = parser.parse_args()
 
     if args.remote:
-        mcp.run(transport="sse", host=args.host, port=args.port)
+        middleware = []
+        api_key = os.getenv("MCP_API_KEY")
+        if api_key:
+            middleware.append(Middleware(AuthMiddleware, api_key=api_key))
+
+        mcp.run(
+            transport="streamable-http",
+            host=args.host,
+            port=args.port,
+            middleware=middleware,
+        )
     else:
         mcp.run(transport="stdio")
 

@@ -42,7 +42,11 @@ async def site_pattern_hunt(
 
     pages = []
     # crawl_result is typically a list of documents in v2 SDK
-    items = crawl_result if isinstance(crawl_result, list) else getattr(crawl_result, "data", [])
+    items = (
+        crawl_result
+        if isinstance(crawl_result, list)
+        else getattr(crawl_result, "data", [])
+    )
 
     for doc in items:
         d = doc if isinstance(doc, dict) else getattr(doc, "__dict__", {})
@@ -50,13 +54,15 @@ async def site_pattern_hunt(
         if isinstance(meta, object) and not isinstance(meta, dict):
             meta = getattr(meta, "__dict__", {})
 
-        pages.append({
-            "url": d.get("url") or meta.get("sourceURL"),
-            "title": meta.get("title"),
-            "design_dna": d.get("branding"),
-            "analysis_preview": (d.get("markdown") or "")[:500],
-            "has_screenshot": d.get("screenshot") is not None
-        })
+        pages.append(
+            {
+                "url": d.get("url") or meta.get("sourceURL"),
+                "title": meta.get("title"),
+                "design_dna": d.get("branding"),
+                "analysis_preview": (d.get("markdown") or "")[:500],
+                "has_screenshot": d.get("screenshot") is not None,
+            }
+        )
 
     return json.dumps(
         {
@@ -67,7 +73,7 @@ async def site_pattern_hunt(
                 "Review these pages to synthesize the site's overall DESIGN SYSTEM. "
                 "Look for consistency in spacing, typography scales, and component "
                 "behavior across different contexts (landing vs. app)."
-            )
+            ),
         },
         indent=2,
     )
