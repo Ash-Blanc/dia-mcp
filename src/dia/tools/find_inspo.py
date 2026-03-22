@@ -77,9 +77,9 @@ async def find_inspo(
                     query=query.replace(" ", "+"),
                     platform=ui_type if ui_type != "any" else "web",
                 )
-            
+
             login_instructions = ""
-            # Mobbin authentication will be handled via server-side env vars 
+            # Mobbin authentication will be handled via server-side env vars
             # as requested (e.g. for load balancing).
 
             tf_tasks.append(

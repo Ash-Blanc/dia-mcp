@@ -43,7 +43,9 @@ async def init() -> None:
             if "flow_id" not in columns:
                 await db.execute("ALTER TABLE patterns ADD COLUMN flow_id TEXT")
             if "step_number" not in columns:
-                await db.execute("ALTER TABLE patterns ADD COLUMN step_number INTEGER DEFAULT 0")
+                await db.execute(
+                    "ALTER TABLE patterns ADD COLUMN step_number INTEGER DEFAULT 0"
+                )
             await db.commit()
     except Exception as e:
         # DO NOT CRASH THE SERVER if indexing is unavailable (e.g. read-only FS)

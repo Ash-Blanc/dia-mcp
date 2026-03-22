@@ -189,12 +189,14 @@ def crawl(
         formats: Formats to extract (e.g. ["markdown", "screenshot"]).
     """
     kwargs: dict[str, Any] = {"limit": limit}
+    scrape_opts: dict[str, Any] = {}
     if prompt:
-        kwargs["scrape_options"] = {"prompt": prompt}
+        scrape_opts["prompt"] = prompt
     if formats:
-        if "scrape_options" not in kwargs:
-            kwargs["scrape_options"] = {}
-        kwargs["scrape_options"]["formats"] = formats
+        scrape_opts["formats"] = formats
+
+    if scrape_opts:
+        kwargs["scrape_options"] = scrape_opts
 
     # The SDK crawl() method in v2 handles the polling automatically
     # and returns the completed crawl data.
