@@ -86,7 +86,14 @@ mcp.prompt()(inspo_hunt)
 
 @mcp.custom_route("/health", methods=["GET"])
 async def health_check(request: Request):
-    return JSONResponse({"status": "ok", "message": "UX Inspo Engine is running"})
+    api_key_set = os.getenv("MCP_API_KEY") is not None
+    return JSONResponse(
+        {
+            "status": "ok",
+            "message": "UX Inspo Engine (Dev with Auth) is running",
+            "auth_enabled": api_key_set,
+        }
+    )
 
 
 # ── Entrypoint ────────────────────────────────────────────────
