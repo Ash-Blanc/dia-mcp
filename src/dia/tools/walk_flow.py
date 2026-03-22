@@ -19,16 +19,19 @@ async def walk_flow(url: str, flow: str) -> str:
               "open pricing, click Pro, go through checkout"
     """
     goal = (
-        f"Walk through this flow: {flow}. "
-        f"At each step document what you see. Return as JSON: "
+        f"You are a Senior UI/UX Researcher. Walk through this flow: {flow}. "
+        f"At each step, carefully document what you see and interact with. "
+        f"Document the visual hierarchy, micro-interactions, and information architecture. "
+        f"Return as valid JSON: "
         f'{{"flow_name": "{flow}", "steps": [{{'
         f'"step_number": int, '
-        f'"screen_title": "what screen this is", '
+        f'"screen_title": "clear, descriptive screen name", '
         f'"url": "current URL", '
-        f'"description": "what the screen shows", '
-        f'"key_ui_elements": ["notable UI components"], '
-        f'"interaction": "what you clicked/did to advance", '
-        f'"design_observations": "what stands out about this screen"'
+        f'"description": "comprehensive description of what the screen shows", '
+        f'"key_ui_elements": ["notable UI components with their roles"], '
+        f'"interaction": "precise action taken (e.g. click button with text X)", '
+        f'"design_observations": "expert analysis of UX patterns, friction, or delight", '
+        f'"screenshot_url": "URL to the screenshot for this step (if available)"'
         f"}}]}}"
     )
 

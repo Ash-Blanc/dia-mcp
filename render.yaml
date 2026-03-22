@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: dia-mcp
+    env: python
+    buildCommand: "pip install uv && uv sync"
+    startCommand: ".venv/bin/fastmcp run src/dia/server.py -t sse --host 0.0.0.0 --port $PORT --path /mcp"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.1
+      - key: FIRECRAWL_API_KEY
+        sync: false
+      - key: TINYFISH_API_KEY
+        sync: false
+      - key: MOBBIN_EMAIL
+        sync: false
+      - key: MOBBIN_PASSWORD
+        sync: false

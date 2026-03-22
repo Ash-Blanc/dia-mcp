@@ -11,14 +11,16 @@ Built with [FastMCP](https://github.com/jlowin/fastmcp), `dia-mcp` connects LLM 
 ## Capabilities
 
 The server provides several tools that AI agents can use:
-- **`find_inspo`**: 🎨 Find UI/UX inspiration images based on queries.
-- **`screenshot_live_app`**: 📸 Take a screenshot of a live application.
-- **`dig_platform`**: ⛏️ Dig around design platforms (like Mobbin, Refero, Godly).
-- **`compare_uis`**: ⚖️ Compare multiple UIs and their patterns.
-- **`extract_design_dna`**: 🧬 Extract the design DNA, principles, and patterns from a UI.
-- **`walk_flow`**: 🚶 Walk through a UX flow.
-- **`index_pattern`**: 💾 Save a UI/UX pattern to the local research index.
-- **`search_index`**: 🔎 Search the local UI/UX pattern index.
+- **`find_inspo`**: 🎨 Find the best UI/UX inspiration images for any design need.
+- **`screenshot_live_app`**: 📸 Capture high-quality screenshots of any live application.
+- **`dig_platform`**: 🕵️ Deep-dive into design platforms like Mobbin, Refero, or Godly using an AI agent.
+- **`compare_uis`**: ⚖️ Screenshot and compare multiple live products side-by-side.
+- **`extract_design_dna`**: 🧬 Extract design tokens, color palettes, and typography from any site.
+- **`walk_flow`**: 🚶 Walk through a real multi-step UI flow and document every step.
+- **`site_pattern_hunt`**: 🏹 Smartly hunt for UI/UX patterns across a whole website.
+- **`index_pattern`**: 💾 Save a UI/UX pattern to the persistent Research Index.
+- **`index_flow`**: 🔬 Walk through and index an entire multi-page flow.
+- **`search_index`**: 🔎 Search your accumulated UI/UX Research Index.
 
 It also includes prompts like `inspo_hunt` to kick off visual research sessions.
 
@@ -45,18 +47,49 @@ This project relies on `uv` for dependency management. Requires Python 3.13+.
    Add your API keys to the `.env` file:
    - `FIRECRAWL_API_KEY`: Get your key from [Firecrawl](https://firecrawl.dev). Used for web scraping and screenshots.
    - `TINYFISH_API_KEY`: Get your key from [TinyFish](https://tinyfish.ai). Used for browser agents on gated platforms.
+   - `MOBBIN_EMAIL` / `MOBBIN_PASSWORD`: Your Mobbin login credentials for TinyFish automated logins.
    - `UX_INSPO_INDEX_DIR`: (Optional) Path to your local pattern index (defaults to `./uxindex`).
 
 ## Running the Server
 
-Start the FastMCP server using `uv`:
+The server supports two transport modes:
+
+### Local Development (stdio)
+
+For local development and testing, run in stdio mode:
+
 ```bash
 uv run dia-mcp
 ```
 
-### Using with Claude Desktop (or other MCP clients)
+### Remote Deployment (Render / Cloud)
 
-Add the following configuration to your Claude Desktop MCP settings (`claude_desktop_config.json`):
+This project includes a `render.yaml` for 1-click deployments to Render as a centralized SaaS web service. 
+
+When hosted remotely, **the server uses the API keys configured in the server's environment**. Users connecting to this server do NOT need to provide their own keys!
+
+1. **Deploy to Render:** Connect your GitHub to Render and deploy via the Blueprint.
+2. **Add Environment Variables:** In the Render Dashboard, configure `FIRECRAWL_API_KEY`, `TINYFISH_API_KEY`, `MOBBIN_EMAIL`, and `MOBBIN_PASSWORD`.
+
+To test the SSE mode locally:
+
+```bash
+uv run fastmcp run src/dia/server.py -t sse --host 0.0.0.0 --port 8000
+```
+
+You can also use environment variables:
+- `MCP_HOST` — default: `0.0.0.0`
+- `MCP_PORT` — default: `8000`
+
+---
+
+## Client Setup
+
+### Local Clients (Using your own locally-stored keys)
+
+If running the Python package locally instead of a cloud deployment, add your `.env` variables directly into the client configs:
+
+### Cursor / Claude Desktop
 
 ```json
 {
@@ -71,13 +104,42 @@ Add the following configuration to your Claude Desktop MCP settings (`claude_des
       ],
       "env": {
         "FIRECRAWL_API_KEY": "fc-...",
-        "TINYFISH_API_KEY": "tf-..."
+        "TINYFISH_API_KEY": "tf-...",
+        "MOBBIN_EMAIL": "...",
+        "MOBBIN_PASSWORD": "..."
       }
     }
   }
 }
 ```
-*(Make sure to match the directory path and replace the API keys with your actual keys.)*
+
+---
+
+### Remote Clients (Connecting to Cloud Deployment)
+
+Clients (like Cursor) connecting to your deployed Render app (Centralized SaaS mode) just need an **SSE connection**:
+
+1. Go to your MCP Client settings
+2. Add a new Server (Type: **SSE**)
+3. Set the URL: `https://your-render-app.onrender.com/sse`
+
+No local keys or CLI configuration is needed!
+
+---
+
+### Running Remotely
+
+If running in remote (SSE) mode, clients connect via HTTP instead:
+
+```json
+{
+  "mcpServers": {
+    "dia-mcp": {
+      "url": "http://localhost:8000/mcp"
+    }
+  }
+}
+```
 
 ## Development Commands
 

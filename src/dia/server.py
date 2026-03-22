@@ -2,19 +2,36 @@
 
 from __future__ import annotations
 
-import json
+import argparse
+import os
+import sys
+from pathlib import Path
+
+# Add the 'src' directory to the path if it's not already there
+# This allows the 'dia' package to be found when running the server file directly
+src_path = str(Path(__file__).parent.parent.resolve())
+if src_path not in sys.path and (Path(src_path) / "dia").exists():
+    sys.path.insert(0, src_path)
 
 from fastmcp import FastMCP
 from fastmcp.server.lifespan import lifespan
 
-from dia.clients import firecrawl as fc
-from dia.index.db import init as init_db, save_pattern, search_patterns
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+
+from dia.index.db import init as init_db
 from dia.tools.find_inspo import find_inspo
 from dia.tools.screenshot import screenshot_live_app
 from dia.tools.dig_platform import dig_platform
 from dia.tools.compare import compare_uis
 from dia.tools.design_dna import extract_design_dna
+from dia.tools.recommend_colors import recommend_colors
+from dia.tools.ux_oracle import ux_oracle
 from dia.tools.walk_flow import walk_flow
+from dia.tools.site_pattern_hunt import site_pattern_hunt
+from dia.tools.index_pattern import index_pattern
+from dia.tools.index_flow import index_flow
+from dia.tools.search_index import search_index
 from dia.prompts.inspo_hunt import inspo_hunt
 
 # ── Lifespan ──────────────────────────────────────────────────
@@ -51,56 +68,13 @@ mcp.add_tool(screenshot_live_app)
 mcp.add_tool(dig_platform)
 mcp.add_tool(compare_uis)
 mcp.add_tool(extract_design_dna)
+mcp.add_tool(recommend_colors)
+mcp.add_tool(ux_oracle)
 mcp.add_tool(walk_flow)
-
-
-@mcp.tool
-async def index_pattern(
-    url: str,
-    app_name: str,
-    flow_name: str,
-    category: str,
-    description: str,
-    tags: str = "",
-) -> str:
-    """
-    💾 Save a UI/UX pattern to the local research index.
-
-    category: onboarding | checkout | settings | dashboard | navigation
-              | forms | modals | empty-states | error-handling | pricing
-    tags: comma-separated, e.g. "dark-mode,mobile,saas,minimalist"
-    """
-    scraped = fc.scrape(url, formats=["markdown", "screenshot"])
-    md = scraped.get("markdown", "") or ""
-    ss = scraped.get("screenshot", "") or ""
-
-    pid = await save_pattern(
-        {
-            "url": url,
-            "app_name": app_name,
-            "flow_name": flow_name,
-            "category": category,
-            "description": description,
-            "tags": [t.strip() for t in tags.split(",") if t.strip()],
-            "markdown": md,
-            "screenshot_b64": ss,
-        }
-    )
-    return json.dumps({"indexed": True, "pattern_id": pid, "app_name": app_name})
-
-
-@mcp.tool
-async def search_index(
-    query: str = "",
-    category: str = "",
-    tags: str = "",
-    limit: int = 20,
-) -> str:
-    """🔎 Search the local UI/UX pattern index."""
-    results = await search_patterns(
-        query=query, category=category, tags=tags, limit=limit
-    )
-    return json.dumps(results, indent=2)
+mcp.add_tool(site_pattern_hunt)
+mcp.add_tool(index_pattern)
+mcp.add_tool(index_flow)
+mcp.add_tool(search_index)
 
 
 # ── Prompt ────────────────────────────────────────────────────
@@ -108,11 +82,40 @@ async def search_index(
 mcp.prompt()(inspo_hunt)
 
 
+# ── Health Check ──────────────────────────────────────────────
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request: Request):
+    return JSONResponse({"status": "ok", "message": "UX Inspo Engine is running"})
+
+
 # ── Entrypoint ────────────────────────────────────────────────
 
 
 def main():
-    mcp.run()
+    parser = argparse.ArgumentParser(description="UX Inspo Engine MCP Server")
+    parser.add_argument(
+        "--remote",
+        action="store_true",
+        help="Run in remote SSE mode instead of stdio",
+    )
+    parser.add_argument(
+        "--host",
+        default=os.getenv("MCP_HOST", "0.0.0.0"),
+        help="Host for remote mode (default: 0.0.0.0)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.getenv("MCP_PORT", "8000")),
+        help="Port for remote mode (default: 8000)",
+    )
+    args = parser.parse_args()
+
+    if args.remote:
+        mcp.run(transport="sse", host=args.host, port=args.port)
+    else:
+        mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":

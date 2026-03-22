@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "dia-mcp"
 version = "0.1.0"
@@ -12,6 +16,9 @@ dependencies = [
     "pydantic>=2.12.5",
     "tinyfish>=0.2.3",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dia"]
 
 [tool.uv]
 package = true

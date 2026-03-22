@@ -35,13 +35,15 @@ async def dig_platform(
         url = url.format(query=query.replace(" ", "+"), platform="web")
 
     goal = (
-        f"Navigate this design inspiration platform and search for '{query}'. "
-        f"{f'Apply these filters: {filters}. ' if filters else ''}"
-        f"Browse results and extract the top {limit} most relevant designs. "
-        f"For each, extract: "
+        f"You are a World-Class Design Curator. Navigate this inspiration platform and search for '{query}'. "
+        f"{f'Apply these filters precisely: {filters}. ' if filters else ''}"
+        f"Curate the top {limit} most inspirational and representative designs. "
+        f"For each result, extract high-quality metadata as valid JSON: "
         f'{{"results": [{{'
-        f'"title": str, "image_url": str, "app_name": str, '
-        f'"screen_type": str, "tags": [str], "page_url": str'
+        f'"title": "descriptive title", "image_url": "direct URL to the image", '
+        f'"app_name": "name of the app or product", "screen_type": "type of screen (e.g. Empty State)", '
+        f'"tags": ["relevant design tokens/tags"], "page_url": "source page URL", '
+        f'"curator_note": "expert reasoning for why this design is noteworthy"'
         f"}}]}}"
     )
 

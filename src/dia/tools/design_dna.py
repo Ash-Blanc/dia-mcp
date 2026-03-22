@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+import asyncio
 from dia.clients import firecrawl as fc
 
 
@@ -26,7 +27,7 @@ async def extract_design_dna(url: str) -> str:
     Returns: color palette, typography, spacing, button styles.
     Understand the RELATIONSHIPS between tokens — not to copy values.
     """
-    result = fc.scrape(url, formats=["branding", "screenshot"])
+    result = await asyncio.to_thread(fc.scrape, url, formats=["branding", "screenshot"])
 
     branding = result.get("branding")
     branding_dict = _branding_to_dict(branding)

@@ -89,11 +89,21 @@ def _search_result_to_dict(item: Any) -> dict[str, Any]:
 
 
 def search(
-    query: str, *, limit: int = 5, formats: list[str] | None = None
+    query: str,
+    *,
+    limit: int = 5,
+    formats: list[str] | None = None,
+    prompt: str | None = None,
+    schema: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    opts: dict[str, Any] | None = None
+    opts: dict[str, Any] = {}
     if formats:
-        opts = {"formats": formats}
+        opts["formats"] = formats
+    if prompt:
+        opts["prompt"] = prompt
+    if schema:
+        opts["schema"] = schema
+
     result = _client().search(query, limit=limit, scrape_options=opts)  # type: ignore[arg-type]
     if result is None:
         return []
@@ -112,13 +122,21 @@ def scrape(
     formats: list[str] | None = None,
     actions: list[dict[str, Any]] | None = None,
     mobile: bool = False,
+    prompt: str | None = None,
+    schema: dict[str, Any] | None = None,
+    model: str = "spark-1-mini",
 ) -> dict[str, Any]:
     formats = formats or ["markdown", "screenshot"]
-    kwargs: dict[str, Any] = {"formats": formats}
+    kwargs: dict[str, Any] = {"formats": formats, "model": model}
     if actions:
         kwargs["actions"] = actions
     if mobile:
         kwargs["mobile"] = True
+    if prompt:
+        kwargs["prompt"] = prompt
+    if schema:
+        kwargs["schema"] = schema
+
     result = _client().scrape(url, **kwargs)
     return _doc_to_dict(result)
 
@@ -154,6 +172,66 @@ def batch_scrape(
     return {"data": []}
 
 
+def crawl(
+    url: str,
+    *,
+    limit: int = 10,
+    prompt: str | None = None,
+    formats: list[str] | None = None,
+) -> Any:
+    """
+    Crawl a website and extract data from multiple pages.
+
+    Args:
+        url: Starting URL.
+        limit: Max pages to crawl.
+        prompt: Optional prompt to guide the crawl/extraction.
+        formats: Formats to extract (e.g. ["markdown", "screenshot"]).
+    """
+    kwargs: dict[str, Any] = {"limit": limit}
+    if prompt:
+        kwargs["scrape_options"] = {"prompt": prompt}
+    if formats:
+        if "scrape_options" not in kwargs:
+            kwargs["scrape_options"] = {}
+        kwargs["scrape_options"]["formats"] = formats
+
+    # The SDK crawl() method in v2 handles the polling automatically
+    # and returns the completed crawl data.
+    return _client().crawl(url, **kwargs)
+
+
 def extract_branding(url: str) -> Any:
     doc = scrape(url, formats=["branding", "screenshot"])
     return doc.get("branding")
+
+
+def run_agent(
+    prompt: str,
+    *,
+    urls: list[str] | None = None,
+    schema: dict[str, Any] | None = None,
+    model: str = "spark-1-mini",
+    max_credits: int = 2500,
+) -> Any:
+    """
+    Run the Firecrawl autonomous agent.
+
+    Args:
+        prompt: Natural language goal.
+        urls: Optional list of URLs to focus on.
+        schema: Optional JSON schema for extraction.
+        model: "spark-1-mini" or "spark-1-pro".
+        max_credits: Maximum credits to consume.
+    """
+    kwargs: dict[str, Any] = {
+        "prompt": prompt,
+        "model": model,
+        "max_credits": max_credits,
+    }
+    if urls:
+        kwargs["urls"] = urls
+    if schema:
+        kwargs["schema"] = schema
+
+    return _client().agent(**kwargs)

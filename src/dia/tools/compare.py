@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+import asyncio
 from dia.clients import firecrawl as fc
 
 
@@ -23,8 +24,11 @@ async def compare_uis(
     """
     url_list = [u.strip() for u in urls.split(",") if u.strip()]
 
-    batch = fc.batch_scrape(
-        url_list, formats=["screenshot@fullPage", "markdown"], mobile=mobile
+    batch = await asyncio.to_thread(
+        fc.batch_scrape,
+        url_list,
+        formats=["screenshot@fullPage", "markdown"],
+        mobile=mobile,
     )
 
     items = batch.get("data", []) if isinstance(batch, dict) else batch

@@ -19,13 +19,25 @@ async def run_agent(
     *,
     stealth: bool = False,
     proxy_country: str | None = None,
-    timeout: int = 180,
+    timeout: int = 300,
+    max_steps: int = 8,
 ) -> dict[str, Any]:
-    """Run a single TinyFish agent task via SSE and return the COMPLETE event."""
+    """
+    Run a single TinyFish agent task via SSE.
+
+    Args:
+        url: The starting URL for the agent.
+        goal: The natural language goal/instructions.
+        stealth: Whether to use stealth browser profile.
+        proxy_country: Optional ISO country code for proxy.
+        timeout: Total timeout in seconds.
+        max_steps: Maximum number of autonomous steps/actions.
+    """
     payload: dict[str, Any] = {
         "url": url,
         "goal": goal,
         "browser_profile": "stealth" if stealth else "lite",
+        "max_steps": max_steps,
     }
     if proxy_country:
         payload["proxy_config"] = {"enabled": True, "country_code": proxy_country}

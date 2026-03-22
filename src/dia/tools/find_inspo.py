@@ -10,12 +10,16 @@ from fastmcp import Context
 from dia.clients import firecrawl as fc
 from dia.clients import tinyfish as tf
 from dia.sources import SOURCES, pick_sources
+from dia.config import MOBBIN_EMAIL, MOBBIN_PASSWORD
 
 DESIGN_GUIDANCE = (
-    "REMEMBER: These references are for UNDERSTANDING design patterns "
-    "and principles. Analyze WHY each design works — the visual hierarchy, "
-    "spacing, color relationships, interaction patterns — then create "
-    "something original that's informed by these insights."
+    "You are a Senior Design Systems Architect. "
+    "When reviewing these references, focus on the 'Design DNA': "
+    "1. Information Hierarchy: How is the most important action emphasized? "
+    "2. Proportional Relationships: What is the ratio between heading and body text? "
+    "3. Spatial Logic: How is negative space used to group related elements? "
+    "4. Component Patterns: Are there reusable UI patterns you can abstract? "
+    "Do not just copy the visuals; synthesize the underlying PRINCIPLES."
 )
 
 
@@ -74,16 +78,28 @@ async def find_inspo(
                     query=query.replace(" ", "+"),
                     platform=ui_type if ui_type != "any" else "web",
                 )
+            
+            login_instructions = ""
+            if key == "mobbin":
+                email = MOBBIN_EMAIL
+                password = MOBBIN_PASSWORD
+                if email and password:
+                    login_instructions = (
+                        f"First, navigate to the login page and authenticate using "
+                        f"email '{email}' and password '{password}'. Wait to confirm login. Then, "
+                    )
+
             tf_tasks.append(
                 {
                     "url": search_url,
                     "goal": (
-                        f"Search for '{query}' UI/UX designs. "
-                        f"Find the top {per_source} most relevant results. "
-                        f"For each, extract as JSON: "
-                        f'{{"results": [{{"title": str, "image_url": str, '
-                        f'"app_name": str, "screen_type": str, '
-                        f'"page_url": str, "description": str}}]}}'
+                        f"{login_instructions}You are a Senior Visual Designer. Search for '{query}' UI/UX designs. "
+                        f"Curate the top {per_source} most relevant and visually interesting results. "
+                        f"Extract details as high-quality JSON: "
+                        f'{{"results": [{{"title": "descriptive name", "image_url": "direct URL", '
+                        f'"app_name": "source app", "screen_type": "UI context", '
+                        f'"page_url": "source URL", '
+                        f'"design_rationale": "expert analysis of the layout and styling"}}]}}'
                     ),
                     "stealth": key in ("mobbin", "refero"),
                 }
@@ -92,17 +108,24 @@ async def find_inspo(
     fc_results: list[dict] = []
     tf_results: list[dict] = []
 
+    async def _run_fc_task(task):
+        try:
+            # Firecrawl SDK is synchronous, so we run it in a thread
+            res = await asyncio.to_thread(
+                fc.search,
+                task["query"],
+                limit=task["limit"],
+                formats=["markdown", "screenshot", "links"],
+            )
+            return {"source": task["source"], "results": res}
+        except Exception as e:
+            return {"source": task["source"], "error": str(e)}
+
     async def _fc_search():
-        for task in fc_tasks:
-            try:
-                res = fc.search(
-                    task["query"],
-                    limit=task["limit"],
-                    formats=["markdown", "screenshot", "links"],
-                )
-                fc_results.append({"source": task["source"], "results": res})
-            except Exception as e:
-                fc_results.append({"source": task["source"], "error": str(e)})
+        nonlocal fc_results
+        tasks = [_run_fc_task(t) for t in fc_tasks]
+        if tasks:
+            fc_results = await asyncio.gather(*tasks)
 
     async def _tf_search():
         nonlocal tf_results
@@ -126,7 +149,7 @@ async def find_inspo(
     screenshots: dict[str, bool] = {}
     if screenshot_urls:
         try:
-            batch = fc.batch_scrape(screenshot_urls[:limit])
+            batch = await asyncio.to_thread(fc.batch_scrape, screenshot_urls[:limit])
             items = batch.get("data", []) if isinstance(batch, dict) else batch
             for doc in items:
                 d = doc if isinstance(doc, dict) else doc.__dict__
